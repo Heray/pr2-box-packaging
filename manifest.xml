@@ -1,0 +1,19 @@
+<package>
+  <description brief="pr2-box-packaging">
+
+     pr2-box-packaging
+
+  </description>
+  <author>PaulYang</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pr2-box-packaging</url>
+  <depend package="roscpp"/>
+  <depend package="pcl"/>
+  <depend package="pcl_ros"/>
+  <depend package="pcl_visualization"/>
+  <depend package="opencv2"/>
+
+</package>
+
+
