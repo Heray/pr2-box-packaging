@@ -1,0 +1,26 @@
+#include <ros/ros.h>
+#include <gazebo_msgs/SpawnModel.h>
+#include <iostream>
+#include <fstream>
+ 
+int main(int argc, char** argv)
+{
+  ros::NodeHandle nh;
+  ros::ServiceClient gazebo_spawn_clt = nh.serviceClient<gazebo_msgs::SpawnModel> ("/gazebo/spawn_urdf_model");
+ 
+  gazebo_msgs::SpawnModel model;
+  std::ifstream file("/opt/ros/electric/stacks/simulator_gazebo/gazebo_worlds/objects/coke_can.urdf");
+  std::string line;
+ 
+  while(!file.eof()) // Parse the contents of the given urdf in a string
+    {
+      std::getline(file,line);
+      model.request.model_xml+=line;
+    }
+  file.close();
+ 
+  model.request.model_name="my_model";
+  model.request.reference_frame="world";
+  gazebo_spawn_clt.call(model); //Call the service
+  return 0;
+}
