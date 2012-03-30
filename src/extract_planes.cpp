@@ -1,28 +1,6 @@
-#include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-// #include <pcl/sample_consensus/sac_model_normal_plane.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/segmentation/extract_clusters.h>
+#include "extract_planes.h"
 
-
-// #include "plane.h"
-// #include "point_struct.h"
-#include <stdio.h>
-
-#define PI 3.14159265
-#define RANGE 0.1  //angle range
-#define UNIT 1.0  // m
-
-typedef pcl::PointXYZRGB Point;
-typedef pcl::KdTree<Point>::Ptr KdTreePtr;
-
+/*
 class Extractor
 {
 public:
@@ -47,8 +25,8 @@ public:
     pcl::ModelCoefficients::Ptr coefficients_object_, coefficients_plane_, coefficients_cylinder_;
     pcl::PointIndices::Ptr inliers_object_, inliers_plane_, inliers_cylinder_;
     pcl::EuclideanClusterExtraction<Point> cluster_;
-
-    Extractor() {
+*/
+    Extractor::Extractor() {
         tree.reset(new pcl::KdTreeFLANN<Point > ());
         cloud.reset(new pcl::PointCloud<Point>);
         cloud_filtered.reset(new pcl::PointCloud<Point>);
@@ -63,12 +41,12 @@ public:
         pass.setFilterLimits(-100, 100);
 
         // VoxelGrid for Downsampling
-        LEAFSIZE = 0.01f;
+        LEAFSIZE = 0.005f;
         vg.setLeafSize(LEAFSIZE, LEAFSIZE, LEAFSIZE);
 
         // Any object < CUT_THRESHOLD will be abandoned.
         //CUT_THRESHOLD = (int) (LEAFSIZE * LEAFSIZE * 7000000); // 700
-        CUT_THRESHOLD = (int) (LEAFSIZE * LEAFSIZE * 20000000); // 2000 for nonfiltering
+        CUT_THRESHOLD = (int) (LEAFSIZE * LEAFSIZE * 20000000); // 1500 for nonfiltering
 
         // Clustering
         cluster_.setClusterTolerance(0.06 * UNIT);
@@ -97,7 +75,7 @@ public:
         seg_cylinder.setRadiusLimits(0.02, 0.07); // [0, 0.1]
     }
 
-    float compute_plane() {
+    float Extractor::compute_plane() {
         seg_plane.setInputCloud(cloud_filtered);
         seg_plane.setInputNormals(cloud_normals);
         seg_plane.segment(*inliers_plane_, *coefficients_plane_);
@@ -112,7 +90,7 @@ public:
         return cost;
     }
 
-    float compute_cylinder() {
+    float Extractor::compute_cylinder() {
         seg_cylinder.setInputCloud(cloud_filtered);
         seg_cylinder.setInputNormals(cloud_normals);
 
@@ -124,14 +102,14 @@ public:
         return cost;
     }
 
-    void initializeFromFilename(const std::string & pcd_name) {
+    void Extractor::initializeFromFilename(const std::string & pcd_name) {
         reader.read(pcd_name, *cloud);
         std::cerr << "PointCloud has: " << cloud->points.size() << " data points." << std::endl;
 
         initialize(true);
     }
 
-    void initializeFromCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudp) {
+    void Extractor::initializeFromCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudp) {
         std::cout << "Initializing from Point Cloud" << std::endl;
         cloud->points.resize(cloudp->size());
         for (unsigned int i = 0; i < cloudp->size(); i++) {
@@ -144,7 +122,7 @@ public:
     }
 
     // For debugging
-    void initializeCFGdebug(const std::string & pcd_name) {
+    void Extractor::initializeCFGdebug(const std::string & pcd_name) {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cfg;
         cloud_cfg.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
         reader.read(pcd_name, *cloud_cfg);
@@ -160,7 +138,7 @@ public:
         initializeFromCloud(cloud_cfg);
     }
 
-    void initialize(bool toFilter) {
+    void Extractor::initialize(bool toFilter) {
         // A passthrough filter to remove spurious NaNs
         pass.setInputCloud(cloud);
         pass.filter(*cloud_filtered);
@@ -183,7 +161,7 @@ public:
         ROS_INFO("%lu normals estimated", cloud_normals->points.size());
     }
 
-    bool compute_object(const int i, // std::vector<pcl::PointIndices > &segments) {
+    bool Extractor::compute_object(const int i, // std::vector<pcl::PointIndices > &segments) {
                         std::vector<pcl::PointCloud<Point>::ConstPtr > &segments,
                         std::vector<pcl::ModelCoefficients::Ptr > &coefficients) {
         // Call get_plane, get_cylinder, get_sphere
@@ -195,6 +173,8 @@ public:
 
         inliers_object_ = inliers_plane_;
         // inliers_object_ = inliers_cylinder_;
+
+        std::cerr << "object inliers has " << inliers_object_->indices.size()<< " points." << std::endl;
 
         // Test if the point cloud is too small
         if (inliers_object_->indices.size() < CUT_THRESHOLD) {
@@ -310,7 +290,7 @@ public:
 
         return true;
     }
-};
+// };
 
 /*
 int main(int argc, char** argv) {

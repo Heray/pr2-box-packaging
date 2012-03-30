@@ -21,12 +21,25 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
+        #include_directories(${PCL_INCLUDE_DIRS})
+        #add_definitions(${PCL_DEFINITIONS})
+
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/extract_planes.cpp)
-rosbuild_add_library(${PROJECT_NAME} src/plane_to_rectangle.cpp)
-rosbuild_add_executable(find_path src/find_path.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
+rosbuild_add_library(extract_planes src/extract_planes.cpp)
+rosbuild_add_library(geometry_utils src/geometry_utils.cpp)
+rosbuild_add_library(plane_to_rectangle src/plane_to_rectangle.cpp)
+rosbuild_add_library(add_planar_obstacle src/add_planar_obstacle.cpp)
+rosbuild_add_library(find_path src/find_path.cpp)
+
+rosbuild_add_executable(close_flaps src/close_flaps.cpp)
+
+target_link_libraries(close_flaps extract_planes)
+target_link_libraries(close_flaps geometry_utils)
+target_link_libraries(close_flaps plane_to_rectangle)
+target_link_libraries(close_flaps add_planar_obstacle)
+target_link_libraries(close_flaps find_path)
+
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(close_flaps src/close_flaps.cpp)
+
 #target_link_libraries(example ${PROJECT_NAME})
