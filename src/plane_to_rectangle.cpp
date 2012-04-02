@@ -81,6 +81,14 @@ void fitPlaneToRect(Flap &flap)
     // Find the bottom of the flap
     std::sort(flap.corners.begin(), flap.corners.end(), point_z_compare);
 
+    // Correct the point order if necessary
+    if ((flap.corners.at(2)-flap.corners.at(0)).norm() > (flap.corners.at(3)-flap.corners.at(0)).norm()) {
+        Eigen::Vector3f temp = flap.corners.at(2);
+        flap.corners.at(2) = flap.corners.at(3);
+        flap.corners.at(3) = temp;
+        std::cout << "Wrong Corner Order!!!!";
+    }
+
     // Find the center point of the bottom
     Eigen::Vector3f bottom_center((flap.corners.at(0) + flap.corners.at(1)) / 2);
 

@@ -90,6 +90,44 @@ Eigen::Vector3f RotatePoint(Eigen::Vector3f const &pt, double theta, Eigen::Vect
     return res;
 }
 
+
+// Convert from Axis Angle
+Eigen::Quaternionf getQuaternionFromAxis(const Eigen::Vector3f &v, float angle)
+{
+	float sinAngle;
+	angle *= 0.5f;
+	Eigen::Vector3f vn(v);
+        vn /= vn.norm();
+
+	sinAngle = sin(angle);
+
+        Eigen::Quaternionf q(vn.x() * sinAngle, vn.y() * sinAngle, vn.z() * sinAngle, cos(angle));
+        /*
+	q.x = (vn.x * sinAngle);
+	q.y = (vn.y * sinAngle);
+	q.z = (vn.z * sinAngle);
+	q.w = cos(angle);*/
+        return q;
+}
+
+float angleBetweenVectors(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
+    float v1v2 = v1.dot(v2);
+    return acos(v1v2 / (v1.norm() * v2.norm()));
+}
+
+Eigen::Vector4f RectQuaternion(const Flap &rect) {
+    Eigen::Vector3f x_pos(1, 0, 0);
+    Eigen::Vector3f z_pos(0, 0, 1);
+    float baseAngle = angleBetweenVectors(rect.corners.at(1) - rect.corners.at(0), x_pos);
+    float vertAngle = angleBetweenVectors(rect.corners.at(2) - rect.corners.at(0), z_pos);
+    Eigen::Quaternionf q1 = getQuaternionFromAxis(x_pos, baseAngle);
+    Eigen::Quaternionf q2 = getQuaternionFromAxis(z_pos, vertAngle);
+    Eigen::Quaternionf q = q1 * q2;
+    Eigen::Vector4f res(q.x(), q.y(), q.z(), q.w());
+    return res;
+}
+
+
 Eigen::Vector4f VectorToQuaternion(Eigen::Vector3f const &vDirection)
         {
             // Step 1. Setup basis vectors describing the rotation given the input vector and assuming an initial up direction of (0, 1, 0)

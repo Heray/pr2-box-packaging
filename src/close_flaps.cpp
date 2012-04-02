@@ -155,8 +155,16 @@ void findPathForFlap(const Flap &flap,
     std::cout << "center: " << bottom_center << std::endl;
     std::cout << "width: " << width << " height: " << height << std::endl;
 
-    // Find the vertical point
+    // Find the vertical point flap
     Eigen::Vector3f vertical_mid (bottom_center.x(), bottom_center.y(), bottom_center.z() + dist);
+    Eigen::Vector3f vertical_p2(corners.at(0).x(), corners.at(0).y(), corners.at(0).z() + height);
+    Eigen::Vector3f vertical_p3(corners.at(1).x(), corners.at(1).y(), corners.at(1).z() + height);
+    Flap vertical_flap;
+    vertical_flap.corners.push_back(corners.at(0));
+    vertical_flap.corners.push_back(corners.at(1));
+    vertical_flap.corners.push_back(vertical_p2);
+    vertical_flap.corners.push_back(vertical_p3);
+    vertical_flap.corners.push_back(vertical_mid);
 
     // Find the ending horizontal point
     Eigen::Vector3f horiz_end_pos = RotatePoint(vertical_mid, PI/2.0, corners.at(0), corners.at(1));
@@ -164,9 +172,19 @@ void findPathForFlap(const Flap &flap,
     double dist_pos = (horiz_end_pos - box_center).norm();
     double dist_neg = (horiz_end_neg - box_center).norm();
     Eigen::Vector3f horiz_end = horiz_end_pos;
+    int horiz_sign = 1;
     if (dist_pos > dist_neg ) {
         horiz_end = horiz_end_neg;
+        horiz_sign = -1;
     }
+    Eigen::Vector3f horiz_p2 = RotatePoint(vertical_p2, horiz_sign * PI / 2.0, corners.at(0), corners.at(1));
+    Eigen::Vector3f horiz_p3 = RotatePoint(vertical_p3, horiz_sign * PI / 2.0, corners.at(0), corners.at(1));
+    Flap horiz_flap;
+    horiz_flap.corners.push_back(corners.at(0));
+    horiz_flap.corners.push_back(corners.at(1));
+    horiz_flap.corners.push_back(horiz_p2);
+    horiz_flap.corners.push_back(horiz_p3);
+    horiz_flap.corners.push_back(horiz_end);
 
     // Find the orientation of the vertical plane and the horizontal plane
     Eigen::Vector3f vertical_orientation = (horiz_end - bottom_center);
@@ -175,25 +193,33 @@ void findPathForFlap(const Flap &flap,
     horiz_orientation /= horiz_orientation.norm();
 
     // Add obstacles to collision checker
+    // remove_obstacles();
     arm_navigation_msgs::PlanningScene planning_diff = add_obstacles(obstacle_planes);
 
     // Start planning
     Eigen::Vector3f tolerance_plane (width, height, FLAP_THICKNESS);
 
     // First move the arm to the starting position
-    Eigen::Vector3f start_pt (flap_center.x(), flap_center.y(), flap_center.z() - FLAP_THICKNESS);
-    VectorToQuaternion(flap.normal);
-    find_path(start_pt, tolerance_plane, flap, VectorToQuaternion(flap.normal), planning_diff);
+    find_flap_path(flap, planning_diff);
 
-    /*
+    // Eigen::Vector3f start_pt (flap_center.x(), flap_center.y(), flap_center.z() - FLAP_THICKNESS);
+    // find_path(start_pt, tolerance_plane, flap, VectorToQuaternion(flap.normal), planning_diff);
+
     // Then move the arm to the vertical mid
-    find_path(vertical_mid, tolerance_plane, VectorToQuaternion(vertical_orientation));
-    VectorToQuaternion(vertical_orientation);
+    set_path_finding_points(vertical_flap);
+    find_flap_path(vertical_flap, planning_diff);
 
+    // find_path(vertical_mid, tolerance_plane, VectorToQuaternion(vertical_orientation));
+    // VectorToQuaternion(vertical_orientation);
+
+    
     // Finally move the arm to the horizaontal end
-    find_path(horiz_end, tolerance_plane, VectorToQuaternion(horiz_orientation));
-    VectorToQuaternion(horiz_orientation);
+    set_path_finding_points(horiz_flap);
+    find_flap_path(horiz_flap, planning_diff);
 
+    // find_path(horiz_end, tolerance_plane, VectorToQuaternion(horiz_orientation));
+    // VectorToQuaternion(horiz_orientation);
+    /*
     // debug info
     pcl::PointCloud<pcl::PointNormal> path;
     addPath(start_pt, flap.normal, path);
@@ -225,11 +251,12 @@ int main(int argc, char** argv) {
         // Build obstacle rects
         std::vector<Flap> obstacle_planes;
         for (unsigned int k = 0; k < rects.size(); k++) {
-            if (i != k) {
+            if (i < k) {
                 obstacle_planes.push_back(rects.at(k));
             }
         }
 
+        set_path_finding_points(flaps.at(i));
         findPathForFlap(flaps.at(i), flaps_center, obstacle_planes, i);
     }
 }

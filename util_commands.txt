@@ -1,0 +1,11 @@
+roslaunch pr2_gazebo pr2_empty_world.launch
+roslaunch pr2_3dnav right_arm_navigation.launch
+rosrun pr2_arm_navigation_tutorials move_arm_simple_pose_goal
+
+
+
+
+
+
+
+rosrun pcl pcd_viewer flap_path_0_debug.pcd -normals 1 -ps 10 -normals_scale 1 flap_0.pcd -ps 5  -ax 2

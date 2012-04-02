@@ -49,20 +49,20 @@ void make_flap_trimeshes(const Flap &rect, arm_navigation_msgs::Shape &trimesh_o
     trimesh_object.triangles.push_back(0);
     trimesh_object.triangles.push_back(1);
     trimesh_object.triangles.push_back(4);
-/*
-    trimesh_object.triangles.push_back(0);
-    trimesh_object.triangles.push_back(1);
-    trimesh_object.triangles.push_back(3);
-    trimesh_object.triangles.push_back(1);
-    trimesh_object.triangles.push_back(2);
-    trimesh_object.triangles.push_back(3);
-    trimesh_object.triangles.push_back(0);
-    trimesh_object.triangles.push_back(2);
-    trimesh_object.triangles.push_back(3);
-    trimesh_object.triangles.push_back(0);
-    trimesh_object.triangles.push_back(1);
-    trimesh_object.triangles.push_back(2);
- */
+    /*
+        trimesh_object.triangles.push_back(0);
+        trimesh_object.triangles.push_back(1);
+        trimesh_object.triangles.push_back(3);
+        trimesh_object.triangles.push_back(1);
+        trimesh_object.triangles.push_back(2);
+        trimesh_object.triangles.push_back(3);
+        trimesh_object.triangles.push_back(0);
+        trimesh_object.triangles.push_back(2);
+        trimesh_object.triangles.push_back(3);
+        trimesh_object.triangles.push_back(0);
+        trimesh_object.triangles.push_back(1);
+        trimesh_object.triangles.push_back(2);
+     */
 }
 
 void add_single_obstacle(arm_navigation_msgs::CollisionObject &collision_object, const Flap &rect)
@@ -81,6 +81,33 @@ void add_single_obstacle(arm_navigation_msgs::CollisionObject &collision_object,
 
     collision_object.shapes.push_back(trimesh_object);
     collision_object.poses.push_back(pose);
+}
+
+void add_single_obstacle_box(arm_navigation_msgs::CollisionObject &collision_object, const Flap &rect)
+{
+    arm_navigation_msgs::Shape planar_object;
+
+    planar_object.type = arm_navigation_msgs::Shape::BOX;
+    planar_object.dimensions.push_back(rect.width);
+    planar_object.dimensions.push_back(rect.height);
+    planar_object.dimensions.push_back(FLAP_THICKNESS);
+
+    geometry_msgs::Pose pose;
+
+    pose.position.x = rect.corners.at(4).x()+1;
+    pose.position.y = rect.corners.at(4).y();
+    pose.position.z = rect.corners.at(4).z();
+
+    Eigen::Vector4f orientation = RectQuaternion(rect);
+    pose.orientation.x = orientation.x();
+    pose.orientation.y = orientation.y();
+    pose.orientation.z = orientation.z();
+    pose.orientation.w = orientation.w();
+
+    collision_object.shapes.push_back(planar_object);
+    collision_object.poses.push_back(pose);
+
+    // add_single_obstacle_mesh(collision_object, rect);
 }
 
 void add_single_obstacle_old(arm_navigation_msgs::CollisionObject &collision_object, const Flap &rect)
@@ -291,7 +318,8 @@ shapes::Mesh *mesh = shapes::createMeshFromVertices (verts);
 
 }
 
-void remove_obstacles() {
+void remove_obstacles()
+{
 
     ros::NodeHandle rh;
 
@@ -349,24 +377,18 @@ arm_navigation_msgs::PlanningScene add_obstacles(const std::vector<Flap> &rects)
     for (unsigned int i = 0; i < rects.size(); i++)
     {
         add_single_obstacle(collision_object, rects.at(i));
-
         std::cout << "add_planar_obstacle: adding object " << i << std::endl;
-        for (int k = 0; k < 4; k++)
-        {
-            // std::cout << "its corners: " << rects.at(i).corners.at(k) << std::endl;
-        }
 
     }
     planning_scene_req.planning_scene_diff.collision_objects.push_back(collision_object);
 
     std::cout << "collision_object size: " << planning_scene_req.planning_scene_diff.collision_objects.size() << std::endl;
 
-    /*
-    if (!get_planning_scene_client.call(planning_scene_req, planning_scene_res)) {
+    if (!get_planning_scene_client.call(planning_scene_req, planning_scene_res))
+    {
         ROS_WARN("Can't get planning scene");
         // return -1;
     }
-*/
-    
+
     return planning_scene_res.planning_scene;
 }
